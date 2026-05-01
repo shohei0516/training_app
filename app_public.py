@@ -1,9 +1,9 @@
-import subprocess
-import sys
 from pathlib import Path
 
 import streamlit as st
 from openpyxl import load_workbook
+
+from report_generator import generate_report
 
 
 # ============================================================
@@ -13,7 +13,6 @@ from openpyxl import load_workbook
 BASE_DIR = Path(__file__).resolve().parent
 
 EXCEL_FILE = BASE_DIR / "pitching_form_training.xlsx"
-REPORT_SCRIPT = BASE_DIR / "report_generator.py"
 
 ASSETS_DIR = BASE_DIR / "assets"
 GIF_DIR = ASSETS_DIR / "eval_gif"
@@ -196,20 +195,6 @@ def update_excel_scores(scores: dict) -> None:
 
 
 # ============================================================
-# レポート生成
-# ============================================================
-
-def run_report_generator():
-    result = subprocess.run(
-        [sys.executable, str(REPORT_SCRIPT)],
-        capture_output=True,
-        text=True,
-        cwd=str(BASE_DIR),
-    )
-    return result
-
-
-# ============================================================
 # Streamlit UI
 # ============================================================
 
@@ -298,42 +283,34 @@ if st.button("レポート作成", type="primary"):
         st.success("Excel更新完了")
 
         st.write("レポート生成中...")
-        result = run_report_generator()
+        generate_report()
+        st.success("レポート完成！")
 
-        if result.returncode == 0:
-            st.success("レポート完成！")
-            st.code(result.stdout)
+        output_dir = BASE_DIR / "report_output"
+        pptx_path = output_dir / "pitching_report_auto.pptx"
+        pdf_path = output_dir / "pitching_report_auto.pdf"
 
-            output_dir = BASE_DIR / "report_output"
-            pptx_path = output_dir / "pitching_report_auto.pptx"
-            pdf_path = output_dir / "pitching_report_auto.pdf"
-
-            if pptx_path.exists():
-                with open(pptx_path, "rb") as f:
-                    st.download_button(
-                        label="PPTXをダウンロード",
-                        data=f,
-                        file_name="pitching_report_auto.pptx",
-                        mime="application/vnd.openxmlformats-officedocument.presentationml.presentation",
-                    )
-            else:
-                st.warning("PPTXが見つかりません。")
-
-            if pdf_path.exists():
-                with open(pdf_path, "rb") as f:
-                    st.download_button(
-                        label="PDFをダウンロード",
-                        data=f,
-                        file_name="pitching_report_auto.pdf",
-                        mime="application/pdf",
-                    )
-            else:
-                st.info("PDFは作成されていないため、PPTXをダウンロードしてください。")
-
+        if pptx_path.exists():
+            with open(pptx_path, "rb") as f:
+                st.download_button(
+                    label="PPTXをダウンロード",
+                    data=f,
+                    file_name="pitching_report_auto.pptx",
+                    mime="application/vnd.openxmlformats-officedocument.presentationml.presentation",
+                )
         else:
-            st.error("レポート生成でエラーが発生しました")
-            st.code(result.stderr)
-            st.code(result.stdout)
+            st.warning("PPTXが見つかりません。")
+
+        if pdf_path.exists():
+            with open(pdf_path, "rb") as f:
+                st.download_button(
+                    label="PDFをダウンロード",
+                    data=f,
+                    file_name="pitching_report_auto.pdf",
+                    mime="application/pdf",
+                )
+        else:
+            st.info("PDFは作成されていないため、PPTXをダウンロードしてください。")
 
     except Exception as e:
         st.error("エラーが発生しました")
