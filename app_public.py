@@ -158,14 +158,12 @@ def show_ok_ng(check_id: str) -> None:
     col_ok, col_ng = st.columns(2)
 
     with col_ok:
-        st.markdown("**OK**")
         if ok_path.exists():
             st.image(str(ok_path), use_container_width=True)
         else:
             st.warning(f"{check_id} OK画像なし")
 
     with col_ng:
-        st.markdown("**NG**")
         if ng_path.exists():
             st.image(str(ng_path), use_container_width=True)
         else:
